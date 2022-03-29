@@ -77,11 +77,12 @@ public class grpcClient {
 
     }
     static String cHash(String str){
-        char[] s = str.toCharArray();
-        String ret = "";
-        for(int i=0; i<str.length(); i++){
-            ret+=(char)(s[i]+(i%17));
-        }
-        return ret;
+//        char[] s = str.toCharArray();
+//        String ret = "";
+//        for(int i=0; i<str.length(); i++){
+//            ret+=(char)(s[i]+(i%17));
+//        }
+//        return ret;
+        return str;
     }
 }
