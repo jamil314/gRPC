@@ -1,0 +1,42 @@
+syntax = "proto3";
+
+option java_package = "generated";
+package userPackage;
+
+
+service user{
+  rpc logIn(credential) returns (response);
+  rpc signUp(credential) returns (response);
+  rpc logOut(Empty) returns (response);
+  rpc updateDB(updQuery) returns (response);
+  rpc fetchDB(Empty) returns (responseAndData);
+}
+
+message credential{
+  string username = 1;
+  string password = 2;
+}
+
+message response{
+  string message = 1;
+  int32 resCode = 2;
+}
+
+message updQuery{
+  string field = 1;
+  string value = 2;
+}
+
+message responseAndData{
+  string message = 1;
+  int32 resCode = 2;
+  string name = 3;
+  string fName = 4;
+  string mName = 5;
+  string dept = 6;
+  string reg = 7;
+  string username = 8;
+}
+
+message Empty{
+}
