@@ -6,8 +6,6 @@ const userPackage = object.userPackage;
 
 const client = new userPackage.user('localhost:8080', grpc.credentials.createInsecure())
 
-// const name = process.argv[2]
-// const lastname = process.argv[3]
 
 const operation = process.argv[2]
 
@@ -85,6 +83,18 @@ function updateDB(field, value) {
     )
 }
 
+function getSessionUser() {
+    client.getSessionUser(
+        {},
+        (err, response) => {
+            if (err) {
+                console.log(err)
+            } else {
+                console.log(response)
+            }
+        }
+    )
+}
 
 switch (operation) {
     case 'signup':
@@ -101,6 +111,9 @@ switch (operation) {
         break;
     case 'updatedb':
         updateDB(process.argv[3], process.argv[4])
+        break;
+    case 'who':
+        getSessionUser()
         break;
 }
 
