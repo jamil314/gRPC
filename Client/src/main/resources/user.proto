@@ -10,6 +10,7 @@ service user{
   rpc logOut(Empty) returns (response);
   rpc updateDB(updQuery) returns (response);
   rpc fetchDB(Empty) returns (responseAndData);
+  rpc getSessionUser(Empty) returns (sessionUser);
 }
 
 message credential{
@@ -36,6 +37,10 @@ message responseAndData{
   string dept = 6;
   string reg = 7;
   string username = 8;
+}
+
+message sessionUser{
+  string name = 1;
 }
 
 message Empty{

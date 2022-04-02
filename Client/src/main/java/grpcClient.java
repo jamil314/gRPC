@@ -71,6 +71,12 @@ public class grpcClient {
                     System.out.println(log);
                     logger.info(log);
                     break;
+                case "who":
+                    userGrpc.userBlockingStub sessionStub = userGrpc.newBlockingStub(channel);
+                    User.Empty whoEmpty = User.Empty.newBuilder().build();
+                    User.sessionUser sessionUser = sessionStub.getSessionUser(whoEmpty);
+                    logger.info("Session User: "+sessionUser.getName());
+                    break;
             }
 
         }
