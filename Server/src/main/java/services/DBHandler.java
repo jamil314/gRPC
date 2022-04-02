@@ -153,6 +153,15 @@ public class DBHandler extends userGrpc.userImplBase{
         responseObserver.onCompleted();
     }
 
+    @Override
+    public void getSessionUser(User.Empty request, StreamObserver<User.sessionUser> responseObserver) {
+        logger.info("getting session user");
+        User.sessionUser.Builder response = User.sessionUser.newBuilder();
+        response.setName(sessionUsername);
+        responseObserver.onNext(response.build());
+        responseObserver.onCompleted();
+    }
+
     boolean loggedIn(StreamObserver<User.response> responseObserver){
         if(sessionUsername.equals("")) return false;
         User.response.Builder response = User.response.newBuilder();

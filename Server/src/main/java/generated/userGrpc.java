@@ -187,6 +187,38 @@ public final class userGrpc {
      return getFetchDBMethod;
   }
 
+  private static volatile io.grpc.MethodDescriptor<generated.User.Empty,
+      generated.User.sessionUser> getGetSessionUserMethod;
+
+  @io.grpc.stub.annotations.RpcMethod(
+      fullMethodName = SERVICE_NAME + '/' + "getSessionUser",
+      requestType = generated.User.Empty.class,
+      responseType = generated.User.sessionUser.class,
+      methodType = io.grpc.MethodDescriptor.MethodType.UNARY)
+  public static io.grpc.MethodDescriptor<generated.User.Empty,
+      generated.User.sessionUser> getGetSessionUserMethod() {
+    io.grpc.MethodDescriptor<generated.User.Empty, generated.User.sessionUser> getGetSessionUserMethod;
+    if ((getGetSessionUserMethod = userGrpc.getGetSessionUserMethod) == null) {
+      synchronized (userGrpc.class) {
+        if ((getGetSessionUserMethod = userGrpc.getGetSessionUserMethod) == null) {
+          userGrpc.getGetSessionUserMethod = getGetSessionUserMethod = 
+              io.grpc.MethodDescriptor.<generated.User.Empty, generated.User.sessionUser>newBuilder()
+              .setType(io.grpc.MethodDescriptor.MethodType.UNARY)
+              .setFullMethodName(generateFullMethodName(
+                  "userPackage.user", "getSessionUser"))
+              .setSampledToLocalTracing(true)
+              .setRequestMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
+                  generated.User.Empty.getDefaultInstance()))
+              .setResponseMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
+                  generated.User.sessionUser.getDefaultInstance()))
+                  .setSchemaDescriptor(new userMethodDescriptorSupplier("getSessionUser"))
+                  .build();
+          }
+        }
+     }
+     return getGetSessionUserMethod;
+  }
+
   /**
    * Creates a new async stub that supports all call types for the service
    */
@@ -249,6 +281,13 @@ public final class userGrpc {
       asyncUnimplementedUnaryCall(getFetchDBMethod(), responseObserver);
     }
 
+    /**
+     */
+    public void getSessionUser(generated.User.Empty request,
+        io.grpc.stub.StreamObserver<generated.User.sessionUser> responseObserver) {
+      asyncUnimplementedUnaryCall(getGetSessionUserMethod(), responseObserver);
+    }
+
     @java.lang.Override public final io.grpc.ServerServiceDefinition bindService() {
       return io.grpc.ServerServiceDefinition.builder(getServiceDescriptor())
           .addMethod(
@@ -286,6 +325,13 @@ public final class userGrpc {
                 generated.User.Empty,
                 generated.User.responseAndData>(
                   this, METHODID_FETCH_DB)))
+          .addMethod(
+            getGetSessionUserMethod(),
+            asyncUnaryCall(
+              new MethodHandlers<
+                generated.User.Empty,
+                generated.User.sessionUser>(
+                  this, METHODID_GET_SESSION_USER)))
           .build();
     }
   }
@@ -347,6 +393,14 @@ public final class userGrpc {
       asyncUnaryCall(
           getChannel().newCall(getFetchDBMethod(), getCallOptions()), request, responseObserver);
     }
+
+    /**
+     */
+    public void getSessionUser(generated.User.Empty request,
+        io.grpc.stub.StreamObserver<generated.User.sessionUser> responseObserver) {
+      asyncUnaryCall(
+          getChannel().newCall(getGetSessionUserMethod(), getCallOptions()), request, responseObserver);
+    }
   }
 
   /**
@@ -400,6 +454,13 @@ public final class userGrpc {
     public generated.User.responseAndData fetchDB(generated.User.Empty request) {
       return blockingUnaryCall(
           getChannel(), getFetchDBMethod(), getCallOptions(), request);
+    }
+
+    /**
+     */
+    public generated.User.sessionUser getSessionUser(generated.User.Empty request) {
+      return blockingUnaryCall(
+          getChannel(), getGetSessionUserMethod(), getCallOptions(), request);
     }
   }
 
@@ -460,6 +521,14 @@ public final class userGrpc {
       return futureUnaryCall(
           getChannel().newCall(getFetchDBMethod(), getCallOptions()), request);
     }
+
+    /**
+     */
+    public com.google.common.util.concurrent.ListenableFuture<generated.User.sessionUser> getSessionUser(
+        generated.User.Empty request) {
+      return futureUnaryCall(
+          getChannel().newCall(getGetSessionUserMethod(), getCallOptions()), request);
+    }
   }
 
   private static final int METHODID_LOG_IN = 0;
@@ -467,6 +536,7 @@ public final class userGrpc {
   private static final int METHODID_LOG_OUT = 2;
   private static final int METHODID_UPDATE_DB = 3;
   private static final int METHODID_FETCH_DB = 4;
+  private static final int METHODID_GET_SESSION_USER = 5;
 
   private static final class MethodHandlers<Req, Resp> implements
       io.grpc.stub.ServerCalls.UnaryMethod<Req, Resp>,
@@ -504,6 +574,10 @@ public final class userGrpc {
         case METHODID_FETCH_DB:
           serviceImpl.fetchDB((generated.User.Empty) request,
               (io.grpc.stub.StreamObserver<generated.User.responseAndData>) responseObserver);
+          break;
+        case METHODID_GET_SESSION_USER:
+          serviceImpl.getSessionUser((generated.User.Empty) request,
+              (io.grpc.stub.StreamObserver<generated.User.sessionUser>) responseObserver);
           break;
         default:
           throw new AssertionError();
@@ -571,6 +645,7 @@ public final class userGrpc {
               .addMethod(getLogOutMethod())
               .addMethod(getUpdateDBMethod())
               .addMethod(getFetchDBMethod())
+              .addMethod(getGetSessionUserMethod())
               .build();
         }
       }
