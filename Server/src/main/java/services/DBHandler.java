@@ -1,18 +1,20 @@
 package services;
 
 
-import generated.User;
-import generated.userGrpc;
-import io.grpc.Status;
+import generated.Server;
+import generated.serverGrpc;
 import io.grpc.stub.StreamObserver;
+import io.github.cdimascio.dotenv.Dotenv;
 
+import java.nio.charset.StandardCharsets;
 import java.sql.*;
 import java.util.logging.Logger;
 
-public class DBHandler extends userGrpc.userImplBase{
+public class DBHandler extends serverGrpc.serverImplBase{
 
-    private final String DB = "jdbc:mysql://localhost/SimpleDB";
-    private final String userName = "root";
+    Dotenv dotenv = Dotenv.configure().directory("src/main/resources").load();
+    private final String DB = dotenv.get("database");
+    private final String userName = dotenv.get("DBusername");
     private final String password = "";
     private Connection connection;
     private Statement statement;
@@ -30,27 +32,33 @@ public class DBHandler extends userGrpc.userImplBase{
     private static final Logger logger = Logger.getLogger(DBHandler.class.getName());
 
     @Override
-    public void logIn(User.credential request, StreamObserver<User.response> responseObserver) {
+    public void logIn(Server.credential request, StreamObserver<Server.response> responseObserver) {
 
         String logInUsername = request.getUsername();
-        String logInPassword = sHash(request.getPassword());
+        String logInPassword = request.getPassword();
 
         logger.info("Log In Request from user: "+logInUsername);
 
         if(loggedIn(responseObserver)) return;
 
-        User.response.Builder response = User.response.newBuilder();
+        Server.response.Builder response = Server.response.newBuilder();
 
-        String query = "SELECT * FROM `user` WHERE Username = \""+logInUsername+"\" and Pass = \""+logInPassword+"\";";
+        String query = "SELECT * FROM `tbluser` WHERE Username = \""+logInUsername+"\";";
         try {
             ResultSet resultSet = statement.executeQuery(query);
             if(resultSet.next()){
-                response.setMessage("Success").setResCode(100);
-                logger.info("Login successful for user : " + logInUsername);
-                sessionUsername = logInUsername;
+                if(resultSet.getString("pass").equals(PassHandler.getPw(logInPassword, resultSet.getString("salt")))){
+                    response.setMessage("Success").setResCode(100);
+                    logger.info("Login successful for user : " + logInUsername);
+                    sessionUsername = logInUsername;
+                } else{
+                    response.setMessage("Failed: Incorrect password").setResCode(410);
+                    logger.info("Login failed for user : " + logInUsername);
+                }
+
 
             } else{
-                response.setMessage("Failed").setResCode(400);
+                response.setMessage("Failed: user does not exist").setResCode(411);
                 logger.info("Login failed for user : " + logInUsername);
 
             }
@@ -62,23 +70,24 @@ public class DBHandler extends userGrpc.userImplBase{
     }
 
     @Override
-    public void signUp(User.credential request, StreamObserver<User.response> responseObserver) {
+    public void signUp(Server.credential request, StreamObserver<Server.response> responseObserver) {
         String signupUsername = request.getUsername();
-        String signupPass = sHash(request.getPassword());
+        String signupPass = request.getPassword();
 
         logger.info("Sign Up Request from user: "+signupUsername);
 
         if(loggedIn(responseObserver)) return;
 
-        User.response.Builder response = User.response.newBuilder();
-        String query = "SELECT * FROM `user` WHERE Username = \""+signupUsername+"\";";
+        Server.response.Builder response = Server.response.newBuilder();
+        String query = "SELECT * FROM `tbluser` WHERE Username = \""+signupUsername+"\";";
         try {
             ResultSet resultSet = statement.executeQuery(query);
             if(resultSet.next()){
                 response.setMessage("User exists").setResCode(407);
                 logger.info("Sign Up failed for user : " + signupUsername );
             } else {
-                query = "INSERT INTO User(Username, Pass, fName, mName, Dept, Reg, Name) VALUES(\""+signupUsername+"\", \""+signupPass+"\", \"\", \"\", \"\", \"\", \"\");";
+                String[] tokens = PassHandler.hash(signupPass).split("jamil");
+                query = "INSERT INTO TblUser(Username, Pass, salt, fName, mName, Dept, Reg, Name) VALUES(\""+signupUsername+"\", \""+tokens[0]+"\", \""+tokens[1]+"\", \"\", \"\", \"\", \"\", \"\");";
                 statement.executeUpdate(query);
                 response.setMessage("Success").setResCode(100);
                 logger.info("Sign Up successful for user : " + signupUsername );
@@ -92,28 +101,28 @@ public class DBHandler extends userGrpc.userImplBase{
     }
 
     @Override
-    public void logOut(User.Empty request, StreamObserver<User.response> responseObserver) {
+    public void logOut(Server.Empty request, StreamObserver<Server.response> responseObserver) {
         logger.info("logging out: "+sessionUsername);
         if(loggedOut(responseObserver)) return;
         sessionUsername = "";
-        User.response.Builder response = User.response.newBuilder();
+        Server.response.Builder response = Server.response.newBuilder();
         response.setMessage("Success").setResCode(100);
         responseObserver.onNext(response.build());
         responseObserver.onCompleted();
     }
 
     @Override
-    public void updateDB(User.updQuery request, StreamObserver<User.response> responseObserver) {
+    public void updateDB(Server.updQuery request, StreamObserver<Server.response> responseObserver) {
         if(loggedOut(responseObserver)) return;
-        User.response.Builder response = User.response.newBuilder();
+        Server.response.Builder response = Server.response.newBuilder();
 
         String field = request.getField();
         String value = request.getValue();
-        String query = "SELECT * FROM INFORMATION_SCHEMA.Columns WHERE TABLE_NAME = 'user' AND COLUMN_NAME = '"+field+"';";
+        String query = "SELECT * FROM INFORMATION_SCHEMA.Columns WHERE TABLE_NAME = 'tbluser' AND COLUMN_NAME = '"+field+"';";
         try {
             ResultSet resultSet = statement.executeQuery(query);
             if(resultSet.next()){
-                query = "UPDATE `user` SET `"+field +"` = '"+value+"' WHERE `user`.`Username` = '"+sessionUsername+"';";
+                query = "UPDATE `tbluser` SET `"+field +"` = '"+value+"' WHERE `tbluser`.`Username` = '"+sessionUsername+"';";
                 statement.executeUpdate(query);
                 response.setMessage("Success").setResCode(100);
             } else {
@@ -127,13 +136,13 @@ public class DBHandler extends userGrpc.userImplBase{
     }
 
     @Override
-    public void fetchDB(User.Empty request, StreamObserver<User.responseAndData> responseObserver) {
+    public void fetchDB(Server.Empty request, StreamObserver<Server.responseAndData> responseObserver) {
         logger.info("Reporting for: "+sessionUsername);
-        User.responseAndData.Builder response = User.responseAndData.newBuilder();
+        Server.responseAndData.Builder response = Server.responseAndData.newBuilder();
         if(sessionUsername.equals("")){
             response.setMessage("You are not logged in. Log in first to access this request.").setResCode(405);
         }else{
-            String query = "SELECT * FROM `user` WHERE Username = \""+sessionUsername+"\";";
+            String query = "SELECT * FROM `tbluser` WHERE Username = \""+sessionUsername+"\";";
             try {
                 ResultSet resultSet = statement.executeQuery(query);
                 while (resultSet.next()){
@@ -153,44 +162,22 @@ public class DBHandler extends userGrpc.userImplBase{
         responseObserver.onCompleted();
     }
 
-    @Override
-    public void getSessionUser(User.Empty request, StreamObserver<User.sessionUser> responseObserver) {
-        logger.info("getting session user");
-        User.sessionUser.Builder response = User.sessionUser.newBuilder();
-        response.setName(sessionUsername);
-        responseObserver.onNext(response.build());
-        responseObserver.onCompleted();
-    }
-
-    boolean loggedIn(StreamObserver<User.response> responseObserver){
+    boolean loggedIn(StreamObserver<Server.response> responseObserver){
         if(sessionUsername.equals("")) return false;
-        User.response.Builder response = User.response.newBuilder();
+        Server.response.Builder response = Server.response.newBuilder();
         response.setMessage("A user is already logged in. Log out first to access this request.").setResCode(403);
         responseObserver.onNext(response.build());
         responseObserver.onCompleted();
         return true;
     }
 
-    boolean loggedOut(StreamObserver<User.response> responseObserver){
+    boolean loggedOut(StreamObserver<Server.response> responseObserver){
         if(!sessionUsername.equals("")) return false;
-        User.response.Builder response = User.response.newBuilder();
+        Server.response.Builder response = Server.response.newBuilder();
         response.setMessage("You are not logged in. Log in first to access this request.").setResCode(405);
         responseObserver.onNext(response.build());
         responseObserver.onCompleted();
         return true;
     }
-
-    static String sHash(String str){
-        char[] s = str.toCharArray();
-        String ret = "";
-        for(int i=0; i<str.length(); i+=2){
-            ret+=(char)(s[i]+(i%31));
-        }
-        for(int i=1; i<str.length(); i+=2){
-            ret+=(char)(s[i]+(i%39));
-        }
-        return ret;
-    }
-
 
 }
